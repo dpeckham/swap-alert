@@ -5,6 +5,8 @@ system is using swap. When swap is idle, it sits quietly as a small dim dot.
 
 Single Swift file, no Xcode project, no dependencies.
 
+![swap-alert menu showing memory breakdown](screenshot.png)
+
 ## Install
 
 ```sh
