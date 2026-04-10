@@ -31,7 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var pulseTimer: Timer?
     private var phase: Double = 0
     private var swapUsed: UInt64 = 0
-    private var swapActive: Bool { swapUsed > 0 }
+    private var demoMode: Bool = CommandLine.arguments.contains("--demo")
+    private var swapActive: Bool { demoMode || swapUsed > 0 }
     private var menuUsageItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ note: Notification) {
@@ -96,19 +97,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func renderImage() -> NSImage {
+        if swapActive {
+            return renderPulsingOrb()
+        }
+        return renderIdleThumbsUp()
+    }
+
+    private func renderIdleThumbsUp() -> NSImage {
+        // SF Symbol renders as a template image, so macOS auto-tints it to
+        // match the menu bar (white in dark mode, black in light mode) just
+        // like the system icons.
+        let image = NSImage(
+            systemSymbolName: "hand.thumbsup.fill",
+            accessibilityDescription: "swap idle"
+        ) ?? NSImage(size: NSSize(width: 18, height: 18))
+        image.isTemplate = true
+        return image
+    }
+
+    private func renderPulsingOrb() -> NSImage {
         let size = NSSize(width: 18, height: 18)
-        let active = swapActive
         let phaseSnap = phase
         let image = NSImage(size: size, flipped: false) { rect in
             let inset = rect.insetBy(dx: 4, dy: 4)
             let path = NSBezierPath(ovalIn: inset)
-            if active {
-                let t = (sin(phaseSnap) + 1.0) / 2.0   // 0..1
-                let alpha = 0.35 + 0.65 * t
-                NSColor.systemRed.withAlphaComponent(alpha).setFill()
-            } else {
-                NSColor.secondaryLabelColor.withAlphaComponent(0.35).setFill()
-            }
+            let t = (sin(phaseSnap) + 1.0) / 2.0   // 0..1
+            let alpha = 0.35 + 0.65 * t
+            NSColor.systemRed.withAlphaComponent(alpha).setFill()
             path.fill()
             return true
         }
